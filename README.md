@@ -1,4 +1,3 @@
-
 # PayTech
 
 ## Installation
@@ -8,7 +7,7 @@ it, simply add the following line to your pubspec.yam:
 
 ```yaml
 dependencies:
-  paytech: ^4.0.0 #flutter latest
+  paytech: ^4.0.2 #flutter latest
 ```
 
 ```yaml
@@ -22,9 +21,11 @@ dependencies:
 ```
 
 ## IMPORTANT
+
 When making a request to `https://paytech.sn/api/payment/request-payment`, you should set the `success_url` and `cancel_url` fields to the respective values:
-- ```https://paytech.sn/mobile/success``` for the success URL, and
-- ```https://paytech.sn/mobile/cancel``` for the cancel URL.
+
+- `https://paytech.sn/mobile/success` for the success URL, and
+- `https://paytech.sn/mobile/cancel` for the cancel URL.
 
 ```
 
@@ -43,17 +44,16 @@ When making a request to `https://paytech.sn/api/payment/request-payment`, you s
 
 Doing this will enable the plugin to handle the events accordingly.
 
-
 ## Example
 
 To run the example project, clone the repo, and run `flutter pub  get` from the Example directory first.
-
 
 Import PayTech Module
 
 `import  'package:paytech/paytech.dart';`
 
-Use `Paytech`  widget to make a payment.
+Use `Paytech` widget to make a payment.
+
 ```dart
 onPressed: () async{
   /**
@@ -78,10 +78,10 @@ onPressed: () async{
 },
 ```
 
-
 ## PayTech Widget
 
 You can pass optional additional arguments to PayTech constructor:
+
 ```dart
 {
   backButtonIcon: IconData, default Icons.arrow_back_ios
@@ -92,7 +92,6 @@ You can pass optional additional arguments to PayTech constructor:
   hideAppBar: bool, default false
 }
 ```
-
 
 ## Author
 
