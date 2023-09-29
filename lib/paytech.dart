@@ -2,8 +2,8 @@ library paytech;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_inappwebview/flutter_inappwebview.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:webview_flutter/webview_flutter.dart';
 
 const MOBILE_CANCEL_URL = "https://paytech.sn/mobile/cancel";
 const MOBILE_SUCCESS_URL = "https://paytech.sn/mobile/success";
@@ -31,9 +31,12 @@ class PayTech extends StatefulWidget {
 
 class _PayTechState extends State<PayTech> {
   final GlobalKey webViewKey = GlobalKey();
-  InAppWebViewController? webViewController;
-  // late InAppWebViewGroupOptions options;
-  late InAppWebViewSettings settings;
+  // InAppWebViewController? webViewController;
+  // // late InAppWebViewGroupOptions options;
+  // late InAppWebViewSettings settings;
+
+  late final PlatformWebViewControllerCreationParams params;
+  late WebViewController controller;
 
   bool onClosing = false;
 
@@ -80,57 +83,103 @@ class _PayTechState extends State<PayTech> {
                 },
               ),
             ),
-      body: Container(
-        child: InAppWebView(
-          key: webViewKey,
-          initialUrlRequest: URLRequest(url: WebUri(widget.paymentUrl)),
-          initialSettings: settings,
-          onWebViewCreated: (controller) {
-            webViewController = controller;
-            onWebViewCreated(controller);
-          },
-          onLoadStart: (controller, url) {
-            this.onLoadStart(controller, url?.toString() ?? '');
-          },
-          // androidOnPermissionRequest: (controller, origin, resources) async {
-          //   return PermissionRequestResponse(
-          //       resources: resources,
-          //       action: PermissionRequestResponseAction.GRANT);
-          // },
-          onPermissionRequest: (controller, permissionRequest) async {
-            return PermissionResponse(
-                resources: permissionRequest.resources,
-                action: PermissionResponseAction.GRANT);
-          },
-          shouldOverrideUrlLoading: (controller, navigationAction) async {
-            //var uri = navigationAction.request.url;
-            return NavigationActionPolicy.ALLOW;
-          },
-          onLoadStop: (controller, url) async {
-            this.onLoadStop(controller, url?.toString() ?? '');
-          },
-          onConsoleMessage: (controller, consoleMessage) {
-            print(consoleMessage);
-          },
-        ),
+
+      body: WebViewWidget(
+        controller: controller,
       ),
+      // body: Container(
+      //   child: InAppWebView(
+      //     key: webViewKey,
+      //     initialUrlRequest: URLRequest(url: WebUri(widget.paymentUrl)),
+      //     initialSettings: settings,
+      //     onWebViewCreated: (controller) {
+      //       webViewController = controller;
+      //       onWebViewCreated(controller);
+      //     },
+      //     onLoadStart: (controller, url) {
+      //       this.onLoadStart(controller, url?.toString() ?? '');
+      //     },
+      //     // androidOnPermissionRequest: (controller, origin, resources) async {
+      //     //   return PermissionRequestResponse(
+      //     //       resources: resources,
+      //     //       action: PermissionRequestResponseAction.GRANT);
+      //     // },
+      //     onPermissionRequest: (controller, permissionRequest) async {
+      //       return PermissionResponse(
+      //           resources: permissionRequest.resources,
+      //           action: PermissionResponseAction.GRANT);
+      //     },
+      //     shouldOverrideUrlLoading: (controller, navigationAction) async {
+      //       //var uri = navigationAction.request.url;
+      //       return NavigationActionPolicy.ALLOW;
+      //     },
+      //     onLoadStop: (controller, url) async {
+      //       this.onLoadStop(controller, url?.toString() ?? '');
+      //     },
+      //     onConsoleMessage: (controller, consoleMessage) {
+      //       print(consoleMessage);
+      //     },
+      //   ),
+      // ),
     );
   }
 
   void initWebView() {
-    settings = InAppWebViewSettings(
-      useShouldOverrideUrlLoading: true,
-      mediaPlaybackRequiresUserGesture: false,
-      useHybridComposition: true,
-      allowsInlineMediaPlayback: true,
-      javaScriptEnabled: true,
-      allowUniversalAccessFromFileURLs: true,
-      allowFileAccessFromFileURLs: true,
-      javaScriptCanOpenWindowsAutomatically: true,
-      loadWithOverviewMode: false,
-      useWideViewPort: false,
-      enableViewportScale: true,
-    );
+    controller = WebViewController()
+      ..addJavaScriptChannel(
+        'FlutterChanelOpenUrl',
+        onMessageReceived: (args) {
+          String url = args.toString();
+          print("FlutterChanelOpenUrl Call");
+          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+        },
+      )
+      ..addJavaScriptChannel(
+        'FlutterChanelOpenDial',
+        onMessageReceived: (args) {
+          String phone = args.toString();
+          print("FlutterChanelOpenDial Call");
+          String encodedPhone = Uri.encodeComponent(phone);
+          Uri phoneUri = Uri(scheme: 'tel', path: encodedPhone);
+          launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+        },
+      )
+      ..setJavaScriptMode(JavaScriptMode.unrestricted)
+      ..setBackgroundColor(const Color(0x00000000))
+      ..setNavigationDelegate(
+        NavigationDelegate(
+          onProgress: (int progress) {
+            print("LOADER ::: ${progress}");
+            // const LoaderWidget();
+          },
+          onPageStarted: (String url) {
+            if (url.contains(MOBILE_SUCCESS_URL) ||
+                url.contains(MOBILE_CANCEL_URL)) {
+              bool result = url.contains("success") ? true : false;
+              _close(result);
+            }
+          },
+          onPageFinished: (String url) {
+            print("FINISHED ...");
+          },
+          onWebResourceError: (WebResourceError error) {},
+        ),
+      )
+      ..loadRequest(Uri.parse(widget.paymentUrl));
+
+    // settings = InAppWebViewSettings(
+    //   useShouldOverrideUrlLoading: true,
+    //   mediaPlaybackRequiresUserGesture: false,
+    //   useHybridComposition: true,
+    //   allowsInlineMediaPlayback: true,
+    //   javaScriptEnabled: true,
+    //   allowUniversalAccessFromFileURLs: true,
+    //   allowFileAccessFromFileURLs: true,
+    //   javaScriptCanOpenWindowsAutomatically: true,
+    //   loadWithOverviewMode: false,
+    //   useWideViewPort: false,
+    //   enableViewportScale: true,
+    // );
 
     // options = InAppWebViewGroupOptions(
     //   crossPlatform: InAppWebViewOptions(
@@ -165,37 +214,37 @@ class _PayTechState extends State<PayTech> {
     }
   }
 
-  void onLoadStop(InAppWebViewController controller, String url) {
-    if (url.contains(MOBILE_SUCCESS_URL) || url.contains(MOBILE_CANCEL_URL)) {
-      bool result = url.contains("success") ? true : false;
-      _close(result);
-    }
-  }
+  // void onLoadStop(InAppWebViewController controller, String url) {
+  //   if (url.contains(MOBILE_SUCCESS_URL) || url.contains(MOBILE_CANCEL_URL)) {
+  //     bool result = url.contains("success") ? true : false;
+  //     _close(result);
+  //   }
+  // }
 
-  void onLoadStart(InAppWebViewController controller, String url) {
-    if (url.contains(MOBILE_SUCCESS_URL) || url.contains(MOBILE_CANCEL_URL)) {
-      bool result = url.contains("success") ? true : false;
-      _close(result);
-    }
-  }
+  // void onLoadStart(InAppWebViewController controller, String url) {
+  //   if (url.contains(MOBILE_SUCCESS_URL) || url.contains(MOBILE_CANCEL_URL)) {
+  //     bool result = url.contains("success") ? true : false;
+  //     _close(result);
+  //   }
+  // }
 
-  void onWebViewCreated(InAppWebViewController controller) {
-    controller.addJavaScriptHandler(
-        handlerName: 'FlutterChanelOpenUrl',
-        callback: (args) {
-          String url = args[0].toString();
-          print("FlutterChanelOpenUrl Call");
-          launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
-        });
+  // void onWebViewCreated(InAppWebViewController controller) {
+  //   controller.addJavaScriptHandler(
+  //       handlerName: 'FlutterChanelOpenUrl',
+  //       callback: (args) {
+  //         String url = args[0].toString();
+  //         print("FlutterChanelOpenUrl Call");
+  //         launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+  //       });
 
-    controller.addJavaScriptHandler(
-        handlerName: 'FlutterChanelOpenDial',
-        callback: (args) {
-          String phone = args[0].toString();
-          print("FlutterChanelOpenDial Call");
-          String encodedPhone = Uri.encodeComponent(phone);
-          Uri phoneUri = Uri(scheme: 'tel', path: encodedPhone);
-          launchUrl(phoneUri, mode: LaunchMode.externalApplication);
-        });
-  }
+  //   controller.addJavaScriptHandler(
+  //       handlerName: 'FlutterChanelOpenDial',
+  //       callback: (args) {
+  //         String phone = args[0].toString();
+  //         print("FlutterChanelOpenDial Call");
+  //         String encodedPhone = Uri.encodeComponent(phone);
+  //         Uri phoneUri = Uri(scheme: 'tel', path: encodedPhone);
+  //         launchUrl(phoneUri, mode: LaunchMode.externalApplication);
+  //       });
+  // }
 }
