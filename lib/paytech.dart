@@ -32,7 +32,8 @@ class PayTech extends StatefulWidget {
 class _PayTechState extends State<PayTech> {
   final GlobalKey webViewKey = GlobalKey();
   InAppWebViewController? webViewController;
-  late InAppWebViewGroupOptions options;
+  // late InAppWebViewGroupOptions options;
+  late InAppWebViewSettings settings;
 
   bool onClosing = false;
 
@@ -82,9 +83,8 @@ class _PayTechState extends State<PayTech> {
       body: Container(
         child: InAppWebView(
           key: webViewKey,
-          initialUrlRequest:
-              URLRequest(url: WebUri.uri(Uri.parse(widget.paymentUrl))),
-          initialOptions: options,
+          initialUrlRequest: URLRequest(url: WebUri(widget.paymentUrl)),
+          initialSettings: settings,
           onWebViewCreated: (controller) {
             webViewController = controller;
             onWebViewCreated(controller);
@@ -92,10 +92,15 @@ class _PayTechState extends State<PayTech> {
           onLoadStart: (controller, url) {
             this.onLoadStart(controller, url?.toString() ?? '');
           },
-          androidOnPermissionRequest: (controller, origin, resources) async {
-            return PermissionRequestResponse(
-                resources: resources,
-                action: PermissionRequestResponseAction.GRANT);
+          // androidOnPermissionRequest: (controller, origin, resources) async {
+          //   return PermissionRequestResponse(
+          //       resources: resources,
+          //       action: PermissionRequestResponseAction.GRANT);
+          // },
+          onPermissionRequest: (controller, permissionRequest) async {
+            return PermissionResponse(
+                resources: permissionRequest.resources,
+                action: PermissionResponseAction.GRANT);
           },
           shouldOverrideUrlLoading: (controller, navigationAction) async {
             //var uri = navigationAction.request.url;
@@ -113,24 +118,39 @@ class _PayTechState extends State<PayTech> {
   }
 
   void initWebView() {
-    options = InAppWebViewGroupOptions(
-      crossPlatform: InAppWebViewOptions(
-        useShouldOverrideUrlLoading: true,
-        mediaPlaybackRequiresUserGesture: false,
-        javaScriptEnabled: true,
-        allowUniversalAccessFromFileURLs: true,
-        allowFileAccessFromFileURLs: true,
-        javaScriptCanOpenWindowsAutomatically: true,
-      ),
-      android: AndroidInAppWebViewOptions(
-          useHybridComposition: true,
-          loadWithOverviewMode: false,
-          useWideViewPort: false),
-      ios: IOSInAppWebViewOptions(
-        allowsInlineMediaPlayback: true,
-        enableViewportScale: true,
-      ),
+    settings = InAppWebViewSettings(
+      useShouldOverrideUrlLoading: true,
+      mediaPlaybackRequiresUserGesture: false,
+      useHybridComposition: true,
+      allowsInlineMediaPlayback: true,
+      javaScriptEnabled: true,
+      allowUniversalAccessFromFileURLs: true,
+      allowFileAccessFromFileURLs: true,
+      javaScriptCanOpenWindowsAutomatically: true,
+      loadWithOverviewMode: false,
+      useWideViewPort: false,
+      enableViewportScale: true,
     );
+
+    // options = InAppWebViewGroupOptions(
+    //   crossPlatform: InAppWebViewOptions(
+    //     useShouldOverrideUrlLoading: true,
+    //     mediaPlaybackRequiresUserGesture: false,
+    //     javaScriptEnabled: true,
+    //     allowUniversalAccessFromFileURLs: true,
+    //     allowFileAccessFromFileURLs: true,
+    //     javaScriptCanOpenWindowsAutomatically: true,
+    //   ),
+    //   android: AndroidInAppWebViewOptions(
+    //     useHybridComposition: true,
+    //     loadWithOverviewMode: false,
+    //     useWideViewPort: false,
+    //   ),
+    //   ios: IOSInAppWebViewOptions(
+    //     allowsInlineMediaPlayback: true,
+    //     enableViewportScale: true,
+    //   ),
+    // );
   }
 
   void _close(bool success) async {
