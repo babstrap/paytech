@@ -168,8 +168,7 @@ class _PayTechState extends State<PayTech> {
           },
           onWebResourceError: (WebResourceError error) {},
         ),
-      )
-      ..loadRequest(Uri.parse(widget.paymentUrl));
+      );
 
     // settings = InAppWebViewSettings(
     //   useShouldOverrideUrlLoading: true,
