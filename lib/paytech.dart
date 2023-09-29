@@ -149,7 +149,7 @@ class _PayTechState extends State<PayTech> {
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
-            print("LOADER ::: ${progress}");
+            debugPrint("LOADER ::: $progress");
             // const LoaderWidget();
           },
           onPageStarted: (String url) {
@@ -160,7 +160,11 @@ class _PayTechState extends State<PayTech> {
             }
           },
           onPageFinished: (String url) {
-            print("FINISHED ...");
+            if (url.contains(MOBILE_SUCCESS_URL) ||
+                url.contains(MOBILE_CANCEL_URL)) {
+              bool result = url.contains("success") ? true : false;
+              _close(result);
+            }
           },
           onWebResourceError: (WebResourceError error) {},
         ),
