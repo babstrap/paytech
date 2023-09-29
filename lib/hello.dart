@@ -14,20 +14,20 @@ class AppScreen extends StatelessWidget {
       ),
       body: Center(
         child: Builder(
-          builder: (context) =>  ElevatedButton(
+          builder: (context) => ElevatedButton(
             child: Text('Make Payment'),
-            onPressed: () async{
-              var paymentUrl = "https://paytech.sn/payment/checkout/729b3e3021226cd27905";
+            onPressed: () async {
+              var paymentUrl =
+                  "https://paytech.sn/payment/checkout/729b3e3021226cd27905";
 
               bool paymentResult = await (Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => PayTech(paymentUrl)),
               ) as FutureOr<bool>);
 
-              if(paymentResult){
+              if (paymentResult) {
                 print("Payment success");
-              }
-              else{
+              } else {
                 print("Payment failed");
               }
             },
